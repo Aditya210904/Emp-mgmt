@@ -1,5 +1,5 @@
-import { Component, effect, EventEmitter, input, Output } from '@angular/core';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatRadioModule } from '@angular/material/radio';
@@ -39,82 +39,35 @@ import { Employee } from '../employee';
     >
       <mat-form-field>
         <mat-label>Name</mat-label>
-        <input matInput placeholder="Name" formControlName="name" required />
-        @if (name.invalid) {
-        <mat-error>Name must be at least 3 characters long.</mat-error>
-        }
+        <input matInput placeholder="Name" formControlName="name" />
       </mat-form-field>
 
       <mat-form-field>
         <mat-label>Position</mat-label>
-        <input
-          matInput
-          placeholder="Position"
-          formControlName="position"
-          required
-        />
-        @if (position.invalid) {
-        <mat-error>Position must be at least 5 characters long.</mat-error>
-        }
+        <input matInput placeholder="Position" formControlName="position" />
       </mat-form-field>
 
       <mat-radio-group formControlName="level" aria-label="Select an option">
-        <mat-radio-button name="level" value="junior" required 
-          >Junior</mat-radio-button
-        >
-        <mat-radio-button name="level" value="mid"
-          >Mid</mat-radio-button
-        >
-        <mat-radio-button name="level" value="senior"
-          >Senior</mat-radio-button
-        >
+        <mat-radio-button name="level" value="junior">Junior</mat-radio-button>
+        <mat-radio-button name="level" value="mid">Mid</mat-radio-button>
+        <mat-radio-button name="level" value="senior">Senior</mat-radio-button>
       </mat-radio-group>
       <br />
-      <button
-        mat-raised-button
-        color="primary"
-        type="submit"
-        [disabled]="employeeForm.invalid"
-      >
-        Add
-      </button>
+      <button mat-raised-button color="primary" type="submit">Add</button>
     </form>
   `,
 })
 export class EmployeeFormComponent {
-  initialState = input<Employee>();
-
-  @Output()
-  formValuesChanged = new EventEmitter<Employee>();
-
-  @Output()
-  formSubmitted = new EventEmitter<Employee>();
+  @Output() formValuesChanged = new EventEmitter<Employee>();
+  @Output() formSubmitted = new EventEmitter<Employee>();
 
   employeeForm = this.formBuilder.group({
-    name: ['', [Validators.required, Validators.minLength(3)]],
-    position: ['', [Validators.required, Validators.minLength(5)]],
-    level: ['junior', [Validators.required]],
+    name: [''],
+    position: [''],
+    level: ['junior'],
   });
 
-  constructor(private formBuilder: FormBuilder) {
-    effect(() => {
-      this.employeeForm.setValue({
-        name: this.initialState()?.name || '',
-        position: this.initialState()?.position || '',
-        level: this.initialState()?.level || 'junior',
-      });
-    });
-  }
-
-  get name() {
-    return this.employeeForm.get('name')!;
-  }
-  get position() {
-    return this.employeeForm.get('position')!;
-  }
-  get level() {
-    return this.employeeForm.get('level')!;
-  }
+  constructor(private formBuilder: FormBuilder) {}
 
   submitForm() {
     this.formSubmitted.emit(this.employeeForm.value as Employee);
