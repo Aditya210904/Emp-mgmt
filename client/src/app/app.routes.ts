@@ -7,7 +7,6 @@ import { LoginPage } from './login-page/login';
 export const routes: Routes = [
   { path: '', component: LoginPage },
   { path: 'employeeList/new', component: AddEmployeeComponent },
-  { path: 'edit/:id', component: EditEmployeeComponent },
-  { path: 'login', component: LoginPage },
+  { path: 'employeeList/edit/:id', component: EditEmployeeComponent },
   { path: 'employeeList', component: EmployeesListComponent, title: 'Employees List' }
 ];

@@ -1,69 +1,103 @@
-import { Component, OnInit } from '@angular/core';
-import { EmployeeService } from '../employee.service';
+import { Component, OnInit, WritableSignal } from '@angular/core';
 import { Employee } from '../employee';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatDialog } from '@angular/material/dialog';
-import { EditEmployeeComponent } from '../edit-employee/edit-employee.component';
-import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { EmployeeService } from '../employee.service';
+import { RouterModule } from '@angular/router';
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-employees-list',
-  templateUrl: './employees-list.component.html',
-  styleUrls: ['./employees-list.component.css'],
+  standalone: true,
+  imports: [RouterModule, MatTableModule, MatButtonModule, MatCardModule],
+  styles: [
+    `
+      table {
+        width: 100%;
+
+        button:first-of-type {
+          margin-right: 1rem;
+        }
+      }
+    `,
+  ],
+  template: `
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Employees List</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table mat-table [dataSource]="employees$()">
+          <ng-container matColumnDef="col-name">
+            <th mat-header-cell *matHeaderCellDef>Name</th>
+            <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+          </ng-container>
+          <ng-container matColumnDef="col-position">
+            <th mat-header-cell *matHeaderCellDef>Position</th>
+            <td mat-cell *matCellDef="let element">{{ element.position }}</td>
+          </ng-container>
+          <ng-container matColumnDef="col-level">
+            <th mat-header-cell *matHeaderCellDef>Level</th>
+            <td mat-cell *matCellDef="let element">{{ element.level }}</td>
+          </ng-container>
+          <ng-container matColumnDef="col-action">
+            <th mat-header-cell *matHeaderCellDef>Action</th>
+            <td mat-cell *matCellDef="let element">
+              <button mat-raised-button [routerLink]="['edit/', element._id]">
+                Edit
+              </button>
+              <button
+                mat-raised-button
+                color="warn"
+                (click)="confirmDeleteEmployee(element._id || '')"
+              >
+                Delete
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" [routerLink]="['new']">
+          Add a New Employee
+        </button>           
+      </mat-card-actions>      
+    </mat-card>
+  `,
 })
 export class EmployeesListComponent implements OnInit {
-  employees: Employee[] = [];
-  dataSource = new MatTableDataSource<Employee>(this.employees);
+  employees$ = {} as WritableSignal<Employee[]>;
+  displayedColumns: string[] = [
+    'col-name',
+    'col-position',
+    'col-level',
+    'col-action',
+  ];
 
-  constructor(
-    private employeesService: EmployeeService,
-    private dialog: MatDialog
-  ) {}
+  constructor(private employeesService: EmployeeService) {}
 
-  ngOnInit(): void {
-    this.getEmployees();
+  ngOnInit() {
+    this.fetchEmployees();
   }
 
-  getEmployees(): void {
-    this.employeesService.getEmployee().subscribe((employees) => {
-      this.employees = employees;
-      this.dataSource.data = this.employees; // Set data for MatTableDataSource
-    });
+  confirmDeleteEmployee(id: string): void {
+    const confirmed = window.confirm("Are you sure you want to delete this employee?");
+    if (confirmed) {
+      this.deleteEmployee(id);
+    }
   }
 
-  openEditDialog(employee: Employee): void {
-    const dialogRef = this.dialog.open(EditEmployeeComponent, {
-      data: employee,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.updateEmployee(result);
-      }
+  private deleteEmployee(id: string): void {
+    this.employeesService.deleteEmployee(id).subscribe({
+      next: () => this.fetchEmployees(),
     });
   }
 
-  updateEmployee(employee: Employee): void {
-    this.employeesService.updateEmployee(employee).subscribe(() => {
-      this.getEmployees(); // Refresh the list after update
-    });
-  }
-
-  confirmDelete(employee: Employee): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: employee,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.deleteEmployee(employee.id);
-      }
-    });
-  }
-
-  deleteEmployee(id: string): void {
-    this.employeesService.deleteEmployee(id).subscribe(() => {
-      this.getEmployees(); // Refresh the list after deletion
-    });
+  private fetchEmployees(): void {
+    this.employees$ = this.employeesService.employees$;
+    this.employeesService.getEmployees();
   }
 }

@@ -8,6 +8,7 @@ import { employeeRouter } from "./employee.routes";
 dotenv.config();
 
 const { ATLAS_URI } = process.env;
+console.log(ATLAS_URI);
 
 if (!ATLAS_URI) {
   console.error(
